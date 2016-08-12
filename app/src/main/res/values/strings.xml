@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Popular Movies Stage 1</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_settings">Settings</string>
+    <string name="sorting_preference_title">Sort by</string>
+    <string name="sorting_preference_summary">Please choose your sorting preferences</string>
+    <string name="network_alert_title">Network Not Avialable</string>
+    <string name="network_alert_message">Make sure you have Internet Connection</string>
+
+</resources>
