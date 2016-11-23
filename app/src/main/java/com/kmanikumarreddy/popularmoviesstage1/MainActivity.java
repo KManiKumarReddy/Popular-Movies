@@ -2,16 +2,16 @@ package com.kmanikumarreddy.popularmoviesstage1;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.support.v7.appcompat.*;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -42,44 +42,61 @@ public class MainActivity extends AppCompatActivity {
     final static String API_KEY = BuildConfig.MOVIE_DB_API_KEY;
 
     GridView mainGrid;
-    ArrayList<Movie> popularList;
-    ArrayList<Movie> topVotedList;
+    ArrayList<Movie> movieList;
+    String sortPreference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mainGrid = (GridView) findViewById(R.id.topMovieGrid);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (popularList == null || topVotedList == null){ // Checking to see if data is present before loading
-            ConnectivityManager cm = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
-            NetworkInfo ni = cm.getActiveNetworkInfo();
-            if (ni != null && ni.isConnected()) {
-                new MainSync().execute();
-            } else {
-                AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-                dialog.setTitle(getString(R.string.network_alert_title));
-                dialog.setMessage(getString(R.string.network_alert_message));
-                dialog.setCancelable(false);
-                dialog.show();
-            }
-        } else {
-            loadList();
+        if (!checkConnection()) {
+            return;
         }
+        mainGrid = (GridView) findViewById(R.id.topMovieGrid);
         mainGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Movie movie = (Movie) parent.getAdapter().getItem(position);
-
                 Intent intent = new Intent(MainActivity.this, DetailActivity.class);
                 intent.putExtra("Movie", movie);
                 startActivity(intent);
             }
         });
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        sortPreference = sharedPreferences.getString("sorting_preference", "popular");
+        String params[] = {sortPreference};
+        new MainSync().execute(params);
+    }
+
+    boolean checkConnection() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        NetworkInfo ni = cm.getActiveNetworkInfo();
+        if (ni == null || !ni.isConnected()) {
+            AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
+            dialog.setTitle(getString(R.string.network_alert_title));
+            dialog.setMessage(getString(R.string.network_alert_message));
+            dialog.setNegativeButton(R.string.close, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialogInterface, int id) {
+                }
+            });
+            dialog.show();
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        if (!sortPreference.equals(sharedPreferences.getString("sorting_preference", "popular"))) {
+            sortPreference = sharedPreferences.getString("sorting_preference", "popular");
+            if (!checkConnection()) {
+                return;
+            }
+            String params[] = {sortPreference};
+            new MainSync().execute(params);
+        }
     }
 
     @Override
@@ -101,18 +118,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        outState.putSerializable("popularList", popularList);
-        outState.putSerializable("topVotedList", topVotedList);
+        outState.putSerializable("movieList", movieList);
         super.onSaveInstanceState(outState);
 
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        popularList = (ArrayList<Movie>)savedInstanceState.getSerializable("popularList");
-        topVotedList = (ArrayList<Movie>)savedInstanceState.getSerializable("topVotedList");
-        loadList();
     }
 
     private void URLResult(String webAddress, ArrayList<Movie> _List) {
@@ -129,17 +137,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    private void loadList() {
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        CustomGridAdapter adapter;
-        if (sharedPreferences.getString("sorting_preference", "popular").equals("popular")) {
-            adapter = new CustomGridAdapter(MainActivity.this, popularList);
-        } else {
-            adapter = new CustomGridAdapter(MainActivity.this, topVotedList);
-        }
-        mainGrid.setAdapter(adapter);
     }
 
     private void jsonParser(String s, ArrayList<Movie> movies) {
@@ -169,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public class MainSync extends AsyncTask<Void, Void, Void> {
+    public class MainSync extends AsyncTask<String, Void, Void> {
         ProgressDialog dialog;
 
         @Override
@@ -182,29 +179,19 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        protected Void doInBackground(Void... params) {
-
-            String WebAddressPop;
-            String WebAddressVote;
-            WebAddressPop = "http://api.themoviedb.org/3/discover/movie?sort_by=popularity.desc&api_key="
+        protected Void doInBackground(String... params) {
+            String webAddress;
+            webAddress = "http://api.themoviedb.org/3/movie/" + params[0] + "?api_key="
                     + API_KEY;
-
-            WebAddressVote = "http://api.themoviedb.org/3/discover/movie?sort_by=vote_average.desc&api_key="
-                    + API_KEY;
-
-            popularList = new ArrayList<>();
-            topVotedList = new ArrayList<>();
-
-            URLResult(WebAddressPop, popularList);
-            URLResult(WebAddressVote, topVotedList);
-
+            movieList = new ArrayList<>();
+            URLResult(webAddress, movieList);
             return null;
         }
 
         @Override
         protected void onPostExecute(Void  s) {
             super.onPostExecute(s);
-            loadList();
+            mainGrid.setAdapter(new CustomGridAdapter(MainActivity.this, movieList));
             dialog.cancel();
         }
     }
@@ -213,7 +200,7 @@ public class MainActivity extends AppCompatActivity {
         Context context;
         ArrayList<Movie> movieList;
 
-        public CustomGridAdapter(Context context, ArrayList<Movie> movieDbList) {
+        CustomGridAdapter(Context context, ArrayList<Movie> movieDbList) {
             this.context = context;
             this.movieList = movieDbList;
         }
@@ -272,18 +259,20 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
 
+            ImageView imageView;
             if (convertView == null) {
-                convertView = LayoutInflater.from(context).inflate(R.layout.item_row, parent, false);
+                imageView = new ImageView(context);
+                imageView.setScaleType(ImageView.ScaleType.FIT_XY);
+            } else {
+                imageView = (ImageView) convertView;
             }
-            Movie movie = getItem(position);
 
-
-            ImageView imageViewCustom = (ImageView) convertView.findViewById(R.id.customImageView);
-            Picasso.with(context).load("https://image.tmdb.org/t/p/w185" + movie.getPosterPath())
+            Picasso.with(context).load("https://image.tmdb.org/t/p/w500"
+                    + getItem(position).getPosterPath())
                     .placeholder(R.drawable.place_holder)
-                    .into(imageViewCustom);
+                    .into(imageView);
 
-            return convertView;
+            return imageView;
         }
     }
 }

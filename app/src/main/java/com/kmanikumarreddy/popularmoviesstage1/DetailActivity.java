@@ -3,6 +3,7 @@ package com.kmanikumarreddy.popularmoviesstage1;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,6 +16,7 @@ public class DetailActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         Intent intent = getIntent();
         Movie movieIntent = (Movie) intent.getSerializableExtra("Movie");
 
@@ -24,7 +26,7 @@ public class DetailActivity extends AppCompatActivity {
             titleText.setText(movieIntent.getTitle());
 
             ImageView detailImage = (ImageView) findViewById(R.id.detail_image);
-            Picasso.with(this).load("https://image.tmdb.org/t/p/w185" + movieIntent.getPosterPath())
+            Picasso.with(this).load("https://image.tmdb.org/t/p/w500" + movieIntent.getPosterPath())
                     .placeholder(R.drawable.place_holder)
                     .into(detailImage);
 
@@ -46,5 +48,13 @@ public class DetailActivity extends AppCompatActivity {
             Toast.makeText(this, "ERROR No data was read",
                     Toast.LENGTH_LONG).show();
         }
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

@@ -9,10 +9,11 @@
 
     <GridView
         android:id="@+id/topMovieGrid"
-        android:gravity="center_horizontal"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:columnWidth="200dp"
-        android:numColumns="auto_fit" />
+        android:columnWidth="500px"
+        android:gravity="center_horizontal"
+        android:numColumns="auto_fit"
+        android:stretchMode="columnWidth" />
 
 </LinearLayout>
