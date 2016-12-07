@@ -1,4 +1,4 @@
-# Android-Nanodegree-Project1
+# Popular Movies
 
 Udacity Android Nanodegree Project - 1 & 2 i.e. Popular Movies Stage 1 & 2
 Check tags for each stage's patch
