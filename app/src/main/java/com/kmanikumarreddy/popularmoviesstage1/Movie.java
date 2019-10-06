@@ -6,7 +6,7 @@ import java.io.Serializable;
  * Created by ManiKumarReddy on 11-08-2016.
  */
 public class Movie implements Serializable {
-    public enum Gener { COMEDY, HORROR, DRAMA, ROMANCE, FICTION, ACTION, DOCUMENTARY, ADVANTURE, BIOGRAPHY, OTHER; }  
+    public enum Genre { COMEDY, HORROR, DRAMA, ROMANCE, FICTION, ACTION, DOCUMENTARY, ADVANTURE, BIOGRAPHY, OTHER; }  
 
     private String backdropPath;
     private int id;
@@ -18,13 +18,13 @@ public class Movie implements Serializable {
     private String title;
     private  int voteAverage;
     private int voteCount;
-    private Gener gener;
+    private Genre genre;
 
-    public  getGener() {
-        return gener;
+    public  getGenre() {
+        return genre;
     }
-    public void setGener(Gener gener) {
-        this.gener = gener;
+    public void setGenre(Genre genre) {
+        this.genre = genre;
     }
     
     public int getVoteCount() {
